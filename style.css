@@ -1,0 +1,143 @@
+:root { color-scheme: light; font-family: "Trebuchet MS", Arial, sans-serif; color: #633b51; background: #fff5f8; }
+* { box-sizing: border-box; }
+html { min-height: 100%; overscroll-behavior: none; }
+body { margin: 0; min-height: 100vh; padding: 20px; display: grid; place-items: center; background: radial-gradient(ellipse at 10% 5%, #ffe3ed 0, transparent 35%), radial-gradient(ellipse at 90% 95%, #ffe8ef 0, transparent 32%), #fff7f9; }
+.game-shell { width: min(1100px, 100%); }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 3px 14px; }
+.eyebrow, .story-kicker { margin: 0 0 3px; color: #db7098; font-size: .67rem; letter-spacing: .17em; font-weight: 900; }
+h1 { margin: 0; color: #9d4d72; font-size: clamp(1.4rem, 4vw, 2rem); line-height: 1.2; }
+h1 span { color: #ec7c9e; font-size: .8em; }
+.subtitle { margin: 4px 0 0; color: #98778a; font-size: .88rem; }
+.hud { display: flex; gap: 9px; align-items: center; }
+.stat-card, .restart-button { min-height: 49px; display: flex; align-items: center; gap: 9px; padding: 7px 13px; border: 1px solid #f6dce6; border-radius: 15px; background: #fff; box-shadow: 0 4px 14px #bd66851a; }
+.stat-icon { color: #ed7799; font-size: 1.5rem; }
+.stat-card strong { color: #a64970; font-size: 1rem; white-space: nowrap; }
+.stat-card small { display: block; color: #a38a98; font-size: .63rem; white-space: nowrap; }
+.lives-card strong { letter-spacing: .08em; color: #e47b9a; }
+.restart-button { cursor: pointer; color: #a64970; font: inherit; font-size: .83rem; font-weight: 800; transition: transform .15s, background .15s; }
+.restart-button:hover { background: #fff0f5; transform: translateY(-1px); }
+.game-area { position: relative; overflow: hidden; aspect-ratio: 16 / 9; min-height: 320px; border: 5px solid #fff; border-radius: 23px; background: #d9efca; box-shadow: 0 14px 40px #9e60741c, 0 2px 8px #9e607410; }
+canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.map-tag { position: absolute; z-index: 1; top: 13px; left: 15px; padding: 7px 11px; border-radius: 20px; color: #98617a; background: #fffdf0e8; font-size: .62rem; font-weight: 900; letter-spacing: .12em; pointer-events: none; }
+.map-tag span { color: #e883a2; margin-left: 3px; }
+.message { position: absolute; z-index: 1; top: 13px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 190px); padding: 8px 14px; border: 1px solid #f5dce4; border-radius: 20px; color: #9c5271; background: #fffdf0ef; font-size: .75rem; font-weight: 800; text-align: center; white-space: nowrap; pointer-events: none; }
+.boss-hud { position: absolute; z-index: 2; top: 58px; right: 14px; width: min(310px, calc(100% - 28px)); padding: 9px 12px 11px; border: 1px solid #f0d39e; border-radius: 14px; color: #fff5e2; background: #423747eF; box-shadow: 0 4px 16px #33253c55; }
+.boss-hud[hidden] { display: none; }
+.boss-hud-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; font-size: .78rem; }
+.boss-hud-heading strong { font-size: .83rem; }
+.boss-hud-heading span { color: #f5cc78; font-size: .62rem; letter-spacing: .08em; white-space: nowrap; }
+.boss-health-track { height: 11px; overflow: hidden; border: 1px solid #ffe4af; border-radius: 10px; background: #302b38; }
+.boss-health-track span { display: block; width: 100%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #e982a3, #f3bd69); transition: width .2s ease-out; }
+.help { display: flex; justify-content: space-between; gap: 10px; padding: 11px 5px 0; color: #997d8d; font-size: .73rem; }
+.help b { color: #ad6482; }
+.touch-controls { display: none; position: absolute; z-index: 2; inset: 0; pointer-events: none; touch-action: none; user-select: none; }
+.touch-button { cursor: pointer; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.virtual-joystick { position: absolute; left: calc(env(safe-area-inset-left, 0px) + 24px); bottom: calc(env(safe-area-inset-bottom, 0px) + 22px); width: 144px; height: 144px; border: 1px solid #ffffffb8; border-radius: 50%; background: #fff9f08a; box-shadow: inset 0 0 0 9px #fff9f02e, 0 3px 12px #71405225; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+.virtual-joystick::before { content: ""; position: absolute; inset: 50% auto auto 50%; width: 12px; height: 12px; margin: -6px; border-radius: 50%; background: #be7b9680; }
+.joystick-knob { position: absolute; top: 50%; left: 50%; width: 54px; height: 54px; margin: -27px; border: 2px solid #fff; border-radius: 50%; background: #f8c8d8e8; box-shadow: 0 3px 10px #71405245; transition: background .12s ease; pointer-events: none; }
+.virtual-joystick.is-active .joystick-knob { background: #efa8c1f2; }
+.touch-button.is-pressed { background: #f8c8d8; transform: scale(.95); }
+.attack-button { position: absolute; right: calc(env(safe-area-inset-right, 0px) + 18px); bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); width: 92px; height: 92px; display: grid; place-content: center; gap: 0; padding: 0; border: 2px solid #fff; border-radius: 50%; color: #a63d6d; background: #ffe4eee8; box-shadow: 0 4px 13px #71405245; font-size: 1.9rem; }
+.attack-button small { font-size: .52rem; font-weight: 900; letter-spacing: .04em; }
+.orientation-hint { display: none; }
+.story-modal { position: absolute; z-index: 4; inset: 0; display: grid; place-items: center; padding: 20px; background: #fff0f8aa; backdrop-filter: blur(2px); animation: veil-in .35s ease-out both; }
+.story-modal[hidden] { display: none; }
+.story-card { width: min(430px, 100%); padding: 24px 25px; border: 2px solid #fff1dc; border-radius: 24px; background: #fffaf4f5; box-shadow: 0 12px 35px #86476530, inset 0 0 0 2px #f5dfbd; text-align: center; animation: card-in .42s cubic-bezier(.2,.8,.2,1) both; }
+.story-card h2 { margin: 4px 0 10px; color: #a64f73; font-size: clamp(1.2rem, 4vw, 1.7rem); }
+.story-card p:not(.story-kicker) { margin: 0 0 18px; color: #755367; font-size: 1rem; line-height: 1.65; }
+.story-actions { display: flex; align-items: center; justify-content: center; gap: 9px; flex-wrap: wrap; }
+.story-card button { min-height: 50px; padding: 11px 22px; border: 0; border-radius: 17px; color: #fff; background: #d96f98; box-shadow: 0 5px 12px #c25c8438; font: inherit; font-weight: 900; font-size: .96rem; cursor: pointer; }
+.story-card button:hover { background: #c85d86; }
+.story-card .secondary-button, .story-card .sound-button { min-height: 42px; padding: 9px 15px; color: #94516e; background: #fff0f5; border: 1px solid #f3d2df; box-shadow: none; font-size: .82rem; }
+.story-card .secondary-button:hover, .story-card .sound-button:hover { background: #ffe4ed; }
+.game-area.final-arrival canvas { animation: scene-reveal .9s ease-out both; }
+.game-area.boss-encounter .map-tag { display: none; }
+.game-area.boss-encounter.story-open .story-modal { align-items: flex-start; padding: 14px; background: #211a3029; backdrop-filter: none; }
+.game-area.boss-encounter.story-open .story-card { width: min(520px, 100%); }
+.game-area.boss-encounter.story-open .story-card h2 { color: #a85a76; }
+.game-area.boss-encounter.story-open .story-card p:not(.story-kicker) { line-height: 1.55; }
+.game-area.final-arrival .map-tag, .game-area.final-arrival .message, .game-area.final-arrival .touch-controls { display: none; }
+.game-shell.final-story .hud, .game-shell.final-story > .help { display: none; }
+.game-area.final-arrival.story-open .story-modal { background: #fff0f8aa; }
+.game-area.final-arrival .story-modal { align-items: flex-start; padding: 14px; background: linear-gradient(180deg, #fff0f4c9 0%, #fff1f000 75%); backdrop-filter: none; }
+.game-area.final-arrival .story-card { width: min(640px, 100%); padding: 16px 20px; }
+.game-area.final-arrival .story-kicker { margin-bottom: 1px; }
+.game-area.final-arrival .story-card h2 { margin: 3px 0 7px; font-size: clamp(1.06rem, 3vw, 1.4rem); }
+.game-area.final-arrival .story-card p:not(.story-kicker) { margin: 0 0 10px; font-size: clamp(.88rem, 2.4vw, 1rem); line-height: 1.48; }
+.game-area.final-arrival .story-card button { min-height: 43px; padding: 9px 20px; }
+.game-area.final-arrival .story-card .secondary-button, .game-area.final-arrival .story-card .sound-button { min-height: 38px; padding: 7px 13px; font-size: .78rem; }
+.game-area.final-arrival .story-card.message-in { animation: message-in .38s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes veil-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes card-in { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes message-in { from { opacity: .2; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes scene-reveal { from { opacity: .25; filter: saturate(.7) brightness(1.12); } to { opacity: 1; filter: saturate(1) brightness(1); } }
+@media (pointer: coarse), (hover: none) { .touch-controls, .touch-device .touch-controls { display: block; } }
+@media (max-width: 700px) {
+ body { min-height: 100vh; min-height: 100svh; padding: max(8px, env(safe-area-inset-top, 0px)) max(8px, env(safe-area-inset-right, 0px)) max(8px, env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); align-items: start; overscroll-behavior: none; }
+ .game-shell { width: 100%; }
+ .topbar { align-items: flex-start; flex-direction: column; padding-bottom: 10px; }
+ .hud { width: 100%; justify-content: space-between; gap: 5px; }
+ .stat-card { padding: 6px 9px; gap: 6px; }
+ .game-area { aspect-ratio: 4 / 3; min-height: min(280px, 40svh); border-width: 3px; border-radius: 17px; }
+ .help { flex-direction: column; gap: 5px; padding-top: 8px; font-size: .75rem; }
+ .message { top: 9px; left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100% - 24px); padding: 8px 11px; overflow: hidden; white-space: normal; line-height: 1.35; font-size: .82rem; }
+ .orientation-hint { display: none; }
+ .boss-hud { top: 68px; right: 9px; width: min(310px, calc(100% - 18px)); padding: 7px 9px 9px; }
+ .boss-hud-heading { font-size: .7rem; }
+ .boss-hud-heading strong { font-size: .74rem; }
+ .boss-hud-heading span { font-size: .55rem; }
+ .game-area.boss-encounter.story-open .story-modal { padding: 9px; }
+ .game-area.boss-encounter.story-open .story-card { padding: 15px 14px; }
+ .virtual-joystick { left: calc(env(safe-area-inset-left, 0px) + 16px); bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); width: 136px; height: 136px; }
+ .attack-button { right: calc(env(safe-area-inset-right, 0px) + 15px); bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); width: 86px; height: 86px; }
+ .story-modal { overflow-y: auto; place-items: center; padding: 10px; }
+ .story-card { width: min(100%, 520px); max-height: calc(100% - 4px); overflow-y: auto; padding: 18px 16px; }
+ .story-card h2 { font-size: clamp(1.15rem, 5vw, 1.55rem); }
+ .story-card p:not(.story-kicker) { font-size: .98rem; line-height: 1.5; }
+ .story-card button { min-height: 48px; }
+}
+@media (max-width: 420px) {
+ .subtitle { font-size: .78rem; }
+ .stat-card { min-height: 44px; }
+ .stat-card strong { font-size: .85rem; }
+ .stat-card small { font-size: .55rem; }
+ .restart-button { min-height: 44px; padding: 7px 9px; }
+ .virtual-joystick { width: 126px; height: 126px; }
+ .joystick-knob { width: 48px; height: 48px; margin: -24px; }
+ .attack-button { width: 80px; height: 80px; }
+ .game-area.final-arrival .story-modal { padding: 9px; }
+ .game-area.final-arrival .story-card { padding: 12px 13px; border-radius: 18px; }
+ .game-area.final-arrival .story-card p:not(.story-kicker) { font-size: .83rem; line-height: 1.38; margin-bottom: 8px; }
+ .game-area.final-arrival .story-card button { min-height: 40px; padding: 8px 14px; }
+}
+
+@media (orientation: portrait) and (max-width: 900px) {
+ .orientation-hint { display: block; margin: 0 0 8px; padding: 7px 11px; border: 1px solid #f0d8e2; border-radius: 12px; color: #8c5972; background: #fff9f2; font-size: .75rem; line-height: 1.35; text-align: center; }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+ html, body { width: 100%; height: 100%; min-height: 100%; overflow: hidden; }
+ body { display: block; height: 100vh; height: 100dvh; padding: max(5px, env(safe-area-inset-top, 0px)) max(8px, env(safe-area-inset-right, 0px)) max(5px, env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); }
+ .game-shell { width: 100%; height: 100%; display: flex; flex-direction: column; }
+ .topbar { flex: 0 0 auto; min-height: 44px; align-items: center; flex-direction: row; gap: 8px; padding: 0 2px 5px; }
+ .eyebrow, .subtitle { display: none; }
+ h1 { font-size: clamp(1rem, 3.3vh, 1.35rem); white-space: nowrap; }
+ .hud { gap: 5px; }
+ .stat-card, .restart-button { min-height: 38px; padding: 4px 8px; gap: 5px; border-radius: 11px; }
+ .stat-icon { font-size: 1.15rem; }
+ .stat-card strong { font-size: .82rem; }
+ .stat-card small { font-size: .55rem; }
+ .restart-button { font-size: .73rem; }
+ .game-area { flex: 1 1 auto; width: 100%; height: auto; min-height: 0; aspect-ratio: auto; border-width: 2px; border-radius: 14px; }
+ .help { display: none; }
+ .orientation-hint { display: none !important; }
+ .message { top: 7px; font-size: .75rem; }
+ .boss-hud { top: 48px; right: 10px; }
+ .touch-controls, .touch-device .touch-controls { display: block; }
+ .virtual-joystick { left: calc(env(safe-area-inset-left, 0px) + 12px); bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); width: 120px; height: 120px; }
+ .joystick-knob { width: 46px; height: 46px; margin: -23px; }
+ .attack-button { right: calc(env(safe-area-inset-right, 0px) + 15px); bottom: calc(env(safe-area-inset-bottom, 0px) + 15px); width: 76px; height: 76px; font-size: 1.55rem; }
+ .game-area.final-arrival .story-modal, .game-area.boss-encounter.story-open .story-modal { padding: 8px; }
+ .game-area.final-arrival .story-card, .game-area.boss-encounter.story-open .story-card { max-height: calc(100% - 4px); overflow-y: auto; padding: 12px 15px; }
+ .game-area.final-arrival .story-card p:not(.story-kicker), .game-area.boss-encounter.story-open .story-card p:not(.story-kicker) { font-size: .86rem; line-height: 1.35; }
+}
