@@ -379,6 +379,41 @@ function addBurst(x, y, color = "#f18bb0") {
   for (let i=0;i<8;i++) { const a = i*Math.PI/4; particles.push({ x, y, vx: Math.cos(a)*55, vy: Math.sin(a)*55, life:.55, size:7, color }); }
 }
 
+const projectileSpeed=480, projectileTargetRange=520, projectileTurnRate=6.2;
+
+function findNearestProjectileTarget(originX,originY){
+  let nearest=null,nearestDistance=projectileTargetRange;
+  for(const enemy of enemies){
+    if(!enemy.alive)continue;
+    const distance=Math.hypot(enemy.x-originX,enemy.y-originY);
+    if(distance<nearestDistance){nearest=enemy;nearestDistance=distance;}
+  }
+  if(gameState==="boss-battle"&&boss.alive){
+    const distance=Math.hypot(boss.x-originX,boss.y-originY);
+    if(distance<nearestDistance){nearest=boss;nearestDistance=distance;}
+  }
+  return nearest;
+}
+
+function guideProjectile(shot,dt){
+  if(shot.target&&(!shot.target.alive||Math.hypot(shot.target.x-shot.x,shot.target.y-shot.y)>projectileTargetRange))shot.target=null;
+  if(!shot.target)shot.target=findNearestProjectileTarget(shot.x,shot.y);
+  if(!shot.target)return;
+  const desiredAngle=Math.atan2(shot.target.y-shot.y,shot.target.x-shot.x);
+  const currentAngle=Math.atan2(shot.vy,shot.vx);
+  const angleDifference=Math.atan2(Math.sin(desiredAngle-currentAngle),Math.cos(desiredAngle-currentAngle));
+  const turn=Math.max(-projectileTurnRate*dt,Math.min(projectileTurnRate*dt,angleDifference));
+  const newAngle=currentAngle+turn;
+  shot.vx=Math.cos(newAngle)*projectileSpeed;shot.vy=Math.sin(newAngle)*projectileSpeed;
+}
+
+function segmentHitsCircle(startX,startY,endX,endY,circleX,circleY,radius){
+  const segmentX=endX-startX,segmentY=endY-startY,lengthSquared=segmentX*segmentX+segmentY*segmentY;
+  const projection=lengthSquared?Math.max(0,Math.min(1,((circleX-startX)*segmentX+(circleY-startY)*segmentY)/lengthSquared)):0;
+  const closestX=startX+segmentX*projection,closestY=startY+segmentY*projection;
+  return Math.hypot(closestX-circleX,closestY-circleY)<=radius;
+}
+
 function shoot(targetX, targetY, assisted = false) {
   if ((gameState !== "playing"&&gameState!=="boss-battle") || fireCooldown > 0 || projectiles.length >= 5) return;
   let dx = targetX - player.x, dy = targetY - player.y;
@@ -396,8 +431,10 @@ function shoot(targetX, targetY, assisted = false) {
     }
     if (best) { dx=(best.x-player.x)/(Math.hypot(best.x-player.x,best.y-player.y)); dy=(best.y-player.y)/(Math.hypot(best.x-player.x,best.y-player.y)); }
   }
+  const target=findNearestProjectileTarget(player.x,player.y);
+  if(target){dx=target.x-player.x;dy=target.y-player.y;const targetDistance=Math.hypot(dx,dy)||1;dx/=targetDistance;dy/=targetDistance;}
   player.facingX=dx; player.facingY=dy;
-  projectiles.push({ x:player.x+dx*22, y:player.y+dy*22, vx:dx*480, vy:dy*480, life:1.15 });
+  projectiles.push({ x:player.x+dx*22, y:player.y+dy*22, vx:dx*projectileSpeed, vy:dy*projectileSpeed, life:1.15, target });
   fireCooldown=.42;
 }
 
@@ -578,12 +615,13 @@ function update(dt) {
     }
   }
   for (let i=projectiles.length-1;i>=0;i--) {
-    const shot=projectiles[i]; shot.x+=shot.vx*dt; shot.y+=shot.vy*dt; shot.life-=dt;
+    const shot=projectiles[i],previousX=shot.x,previousY=shot.y;
+    guideProjectile(shot,dt);shot.x+=shot.vx*dt;shot.y+=shot.vy*dt;shot.life-=dt;
     let hit=false;
-    for (const enemy of enemies) if (enemy.alive && Math.hypot(shot.x-enemy.x,shot.y-enemy.y)<enemy.radius+9) {
+    for (const enemy of enemies) if (enemy.alive && segmentHitsCircle(previousX,previousY,shot.x,shot.y,enemy.x,enemy.y,enemy.radius+9)) {
       enemy.alive=false; hit=true; addBurst(enemy.x,enemy.y); break;
     }
-    if(!hit&&gameState==="boss-battle"&&Math.hypot(shot.x-boss.x,shot.y-boss.y)<boss.radius+12){
+    if(!hit&&gameState==="boss-battle"&&boss.alive&&segmentHitsCircle(previousX,previousY,shot.x,shot.y,boss.x,boss.y,boss.radius+12)){
       hit=true;if(boss.mode==="open")damageBoss();else messageElement.textContent="O núcleo está protegido. Espere o cofre abrir.";
       if(gameState!=="boss-battle"){projectiles.length=0;break;}
     }
